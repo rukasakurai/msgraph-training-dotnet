@@ -334,3 +334,4 @@ appsettings.Development.json
 *.zip
 
 demo/GraphTutorial/appsettings.json
+demo/GraphTutorial/appsettings.local.json
