@@ -195,6 +195,54 @@ class GraphHelper
         // Note: if using _appClient, be sure to call EnsureGraphForAppOnlyAuth
         // before using it.
         // EnsureGraphForAppOnlyAuth();
+        EnsureGraphForAppOnlyAuth();
+        // Ensure client isn't null
+        _ = _appClient ??
+            throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
+
+        var @event = new Event
+        {
+            Subject = "Let's go for lunch",
+            Body = new ItemBody
+            {
+                ContentType = BodyType.Html,
+                Content = "Does noon work for you?"
+            },
+            Start = new DateTimeTimeZone
+            {
+                DateTime = "2022-07-15T12:00:00",
+                TimeZone = "Pacific Standard Time"
+            },
+            End = new DateTimeTimeZone
+            {
+                DateTime = "2022-07-15T14:00:00",
+                TimeZone = "Pacific Standard Time"
+            },
+            Location = new Location
+            {
+                DisplayName = "Harry's Bar"
+            },
+            Attendees = new List<Attendee>()
+            {
+                new Attendee
+                {
+                    EmailAddress = new EmailAddress
+                    {
+                        Address = "samanthab@contoso.onmicrosoft.com",
+                        Name = "Samantha Booth"
+                    },
+                    Type = AttendeeType.Required
+                }
+            },
+            AllowNewTimeProposals = true,
+            IsOnlineMeeting = true,
+            OnlineMeetingProvider = OnlineMeetingProviderType.TeamsForBusiness
+        };
+
+        // Send the message
+        await _appClient.Users["ruka.sakurai@tl6j3.onmicrosoft.com"]
+            .Events.Request().Header("Prefer","outlook.timezone=\"Pacific Standard Time\"").AddAsync(@event);
+
     }
     // </MakeGraphCallSnippet>
 }
