@@ -29,10 +29,13 @@ public class Settings
 
         Settings settings = config.GetRequiredSection("Settings").Get<Settings>();
 
-        string kvUri = "https://" + settings.KeyVaultName + ".vault.azure.net";
-        var secretClient = new SecretClient(new Uri(kvUri), new DefaultAzureCredential());
-        KeyVaultSecret secret = secretClient.GetSecret("clientSecretForGraph");
-        settings.ClientSecret = secret.Value;
+        try {
+            string kvUri = "https://" + settings.KeyVaultName + ".vault.azure.net";
+            var secretClient = new SecretClient(new Uri(kvUri), new DefaultAzureCredential());
+            KeyVaultSecret secret = secretClient.GetSecret("clientSecretForGraph");
+            settings.ClientSecret = secret.Value;
+        } catch {
+        }
 
         return settings;
     }
