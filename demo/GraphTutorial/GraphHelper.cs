@@ -4,6 +4,7 @@
 using Azure.Core;
 using Azure.Identity;
 using Microsoft.Graph;
+using System.Text.Json;
 
 class GraphHelper
 {
@@ -245,4 +246,22 @@ class GraphHelper
 
     }
     // </MakeGraphCallSnippet>
+
+    public async static Task ListMembersInGroupAsync()
+    {
+        EnsureGraphForAppOnlyAuth();
+        // Ensure client isn't null
+        _ = _appClient ??
+            throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
+
+        var members = await _appClient.Groups["4b5c4fad-ba66-4628-9d0b-46ada2a47345"].Members
+            .Request()
+            .GetAsync();
+
+        foreach(User member in members){
+            //Console.WriteLine(JsonSerializer.Serialize(member));
+            //Console.WriteLine(member.GetType());
+            Console.WriteLine(member.DisplayName);
+        }
+    }
 }

@@ -23,6 +23,7 @@ while (choice != 0)
     Console.WriteLine("3. Send mail");
     Console.WriteLine("4. List users (requires app-only)");
     Console.WriteLine("5. Make a Graph call");
+    Console.WriteLine("6. List members in a group");
 
     try
     {
@@ -59,6 +60,10 @@ while (choice != 0)
         case 5:
             // Run any Graph code
             await MakeGraphCallAsync();
+            break;
+        case 6:
+            // List users in a group
+            await ListMembersInGroupAsync();
             break;
         default:
             Console.WriteLine("Invalid choice! Please try again.");
@@ -212,3 +217,8 @@ async Task MakeGraphCallAsync()
     await GraphHelper.MakeGraphCallAsync();
 }
 // </MakeGraphCallSnippet>
+
+async Task ListMembersInGroupAsync()
+{
+    await GraphHelper.ListMembersInGroupAsync();
+}
