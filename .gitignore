@@ -332,3 +332,5 @@ ASALocalRun/
 .vscode/
 appsettings.Development.json
 *.zip
+
+demo/GraphTutorial/appsettings.json
