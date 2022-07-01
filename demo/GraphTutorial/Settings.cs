@@ -36,7 +36,6 @@ public class Settings
             settings.ClientSecret = secret.Value;
         } catch {
         }
-
         return settings;
     }
 }

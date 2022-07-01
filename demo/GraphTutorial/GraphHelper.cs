@@ -196,6 +196,89 @@ class GraphHelper
         // Note: if using _appClient, be sure to call EnsureGraphForAppOnlyAuth
         // before using it.
         // EnsureGraphForAppOnlyAuth();
+    }
+    // </MakeGraphCallSnippet>
+
+    public async static Task ListMembersInGroupAsync()
+    {
+        EnsureGraphForAppOnlyAuth();
+        // Ensure client isn't null
+        _ = _appClient ??
+            throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
+
+        var members = await _appClient.Groups["4b5c4fad-ba66-4628-9d0b-46ada2a47345"].Members
+            .Request()
+            .GetAsync();
+
+        foreach(User member in members){
+            //Console.WriteLine(JsonSerializer.Serialize(member));
+            //Console.WriteLine(member.GetType());
+            Console.WriteLine(member.DisplayName);
+        }
+    }
+
+    //https://docs.microsoft.com/en-us/graph/api/calendar-getschedule?view=graph-rest-1.0&tabs=csharp
+   public async static Task GetScheduleAsync(string userEmail)
+    {
+        EnsureGraphForAppOnlyAuth();
+        // Ensure client isn't null
+        _ = _appClient ??
+            throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
+
+        var schedules = new List<String>()
+        {
+            userEmail
+        };
+
+        var startTime = new DateTimeTimeZone
+        {
+            DateTime = "2019-03-15T09:00:00",
+            TimeZone = "Pacific Standard Time"
+        };
+
+        var endTime = new DateTimeTimeZone
+        {
+            DateTime = "2019-03-15T18:00:00",
+            TimeZone = "Pacific Standard Time"
+        };
+
+        var availabilityViewInterval = 60;
+
+        var results = await _appClient.Users[userEmail].Calendar
+            .GetSchedule(schedules,endTime,startTime,availabilityViewInterval)
+            .Request()
+            .Header("Prefer","outlook.timezone=\"Pacific Standard Time\"")
+            .PostAsync();
+
+        //Console.WriteLine(results.GetType());
+        foreach(object result in results){
+            Console.WriteLine(JsonSerializer.Serialize(result));
+            //Console.WriteLine(result.GetType());
+            //Console.WriteLine(result.DisplayName);
+        }
+    }
+    
+
+    // https://docs.microsoft.com/en-us/graph/api/user-findmeetingtimes?view=graph-rest-1.0&tabs=http
+    public async static Task FindMeetingTimes(string userEmail)
+    {
+        // Ensure client isn't null
+        _ = _userClient ??
+            throw new System.NullReferenceException("Graph has not been initialized for user auth");
+
+        MeetingTimeSuggestionsResult meetingResponse = await _userClient.Me
+            .FindMeetingTimes()
+            .Request()
+            .Header("Prefer", "outlook.timezone=\"W. Europe Standard Time\"")
+            .PostAsync();
+
+        Console.WriteLine(JsonSerializer.Serialize(meetingResponse));
+        //Console.WriteLine(member.DisplayName);
+    }
+
+    // https://docs.microsoft.com/en-us/graph/api/calendar-post-events?view=graph-rest-1.0&tabs=csharp#example-2-create-and-enable-an-event-as-an-online-meeting
+    public async static Task CreateEventAsync(string userEmail)
+    {
         EnsureGraphForAppOnlyAuth();
         // Ensure client isn't null
         _ = _appClient ??
@@ -241,27 +324,8 @@ class GraphHelper
         };
 
         // Send the message
-        await _appClient.Users["ruka.sakurai@tl6j3.onmicrosoft.com"]
+        await _appClient.Users[userEmail]
             .Events.Request().Header("Prefer","outlook.timezone=\"Pacific Standard Time\"").AddAsync(@event);
-
     }
-    // </MakeGraphCallSnippet>
-
-    public async static Task ListMembersInGroupAsync()
-    {
-        EnsureGraphForAppOnlyAuth();
-        // Ensure client isn't null
-        _ = _appClient ??
-            throw new System.NullReferenceException("Graph has not been initialized for app-only auth");
-
-        var members = await _appClient.Groups["4b5c4fad-ba66-4628-9d0b-46ada2a47345"].Members
-            .Request()
-            .GetAsync();
-
-        foreach(User member in members){
-            //Console.WriteLine(JsonSerializer.Serialize(member));
-            //Console.WriteLine(member.GetType());
-            Console.WriteLine(member.DisplayName);
-        }
-    }
+    
 }

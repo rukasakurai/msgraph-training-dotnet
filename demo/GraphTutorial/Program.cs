@@ -21,9 +21,12 @@ while (choice != 0)
     Console.WriteLine("1. Display access token");
     Console.WriteLine("2. List my inbox");
     Console.WriteLine("3. Send mail");
-    Console.WriteLine("4. List users (requires app-only)");
-    Console.WriteLine("5. Make a Graph call");
+    Console.WriteLine("4. List users");
+    Console.WriteLine("5. Make a customized Graph call");
     Console.WriteLine("6. List members in a group");
+    Console.WriteLine("7. Get schedule");    
+    Console.WriteLine("8. Find meeing times");
+    Console.WriteLine("9. Create an event with a Teams link");
 
     try
     {
@@ -65,6 +68,18 @@ while (choice != 0)
             // List users in a group
             await ListMembersInGroupAsync();
             break;
+        case 7:
+            // Get schedule
+            await GetScheduleAsync("ruka.sakurai@tl6j3.onmicrosoft.com");
+            break;
+        case 8:
+            // Check if available
+            await FindMeetingTimesAsync("ruka.sakurai@tl6j3.onmicrosoft.com");
+            break;
+        case 9:
+            // Creating event (meeting)
+            await CreateEventAsync("ruka.sakurai@tl6j3.onmicrosoft.com");
+            break;
         default:
             Console.WriteLine("Invalid choice! Please try again.");
             break;
@@ -102,6 +117,7 @@ async Task GreetUserAsync()
     catch (Exception ex)
     {
         Console.WriteLine($"Error getting user: {ex.Message}");
+        Console.WriteLine(ex);
     }
 }
 // </GreetUserSnippet>
@@ -148,6 +164,7 @@ async Task ListInboxAsync()
     catch (Exception ex)
     {
         Console.WriteLine($"Error getting user's inbox: {ex.Message}");
+        Console.WriteLine(ex);
     }
 }
 // </ListInboxSnippet>
@@ -222,3 +239,19 @@ async Task ListMembersInGroupAsync()
 {
     await GraphHelper.ListMembersInGroupAsync();
 }
+
+async Task GetScheduleAsync(String userEmail)
+{
+    await GraphHelper.GetScheduleAsync(userEmail);
+}
+
+async Task FindMeetingTimesAsync(String userEmail)
+{
+    await GraphHelper.FindMeetingTimes(userEmail);
+}
+
+async Task CreateEventAsync(String userEmail)
+{
+    await GraphHelper.CreateEventAsync(userEmail);
+}
+
