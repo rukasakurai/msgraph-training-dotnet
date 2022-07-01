@@ -1,5 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
+using Microsoft.Graph;
 
 // <ProgramSnippet>
 Console.WriteLine(".NET Graph Tutorial\n");
@@ -25,8 +26,9 @@ while (choice != 0)
     Console.WriteLine("5. Make a customized Graph call");
     Console.WriteLine("6. List members in a group");
     Console.WriteLine("7. Get schedule");    
-    Console.WriteLine("8. Find meeing times");
+    Console.WriteLine("8. Find meeting slot");
     Console.WriteLine("9. Create an event with a Teams link");
+    Console.WriteLine("10. Find available meeting slot, and create an event with a Teams link");
 
     try
     {
@@ -74,11 +76,15 @@ while (choice != 0)
             break;
         case 8:
             // Check if available
-            await FindMeetingTimesAsync("ruka.sakurai@tl6j3.onmicrosoft.com");
+            await FindMeetingTimesAsync("AdeleV@tl6j3.onmicrosoft.com");
             break;
         case 9:
             // Creating event (meeting)
             await CreateEventAsync("ruka.sakurai@tl6j3.onmicrosoft.com");
+            break;
+        case 10:
+            // Creating event (meeting)
+            await FindAndCreateEventAsync("ruka.sakurai@tl6j3.onmicrosoft.com");
             break;
         default:
             Console.WriteLine("Invalid choice! Please try again.");
@@ -247,11 +253,35 @@ async Task GetScheduleAsync(String userEmail)
 
 async Task FindMeetingTimesAsync(String userEmail)
 {
-    await GraphHelper.FindMeetingTimes(userEmail);
+    TimeSlot timeSlot = await GraphHelper.FindMeetingTimes(userEmail);
 }
 
 async Task CreateEventAsync(String userEmail)
 {
-    await GraphHelper.CreateEventAsync(userEmail);
+    TimeSlot @timeslot = new TimeSlot
+    {
+        Start = new DateTimeTimeZone
+        {
+            DateTime = "2022-07-12T12:00:00",
+            TimeZone = "Asia/Tokyo"
+        },
+        End = new DateTimeTimeZone
+        {
+            DateTime = "2022-07-12T14:00:00",
+            TimeZone = "Asia/Tokyo"
+        }
+    };
+
+    await GraphHelper.CreateEventAsync(userEmail, @timeslot);
 }
 
+async Task FindAndCreateEventAsync(String userEmail)
+{
+    IGroupMembersCollectionWithReferencesPage members = await GraphHelper.ListMembersInGroupAsync();
+    Console.WriteLine("Id:" + members.ElementAt(0).Id);
+    // TODO: Get e-mail address using Id and pass it to FindMeetingTimes
+
+    TimeSlot timeSlot = await GraphHelper.FindMeetingTimes(userEmail);
+
+    await GraphHelper.CreateEventAsync(userEmail, timeSlot);
+}

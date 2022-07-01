@@ -199,7 +199,7 @@ class GraphHelper
     }
     // </MakeGraphCallSnippet>
 
-    public async static Task ListMembersInGroupAsync()
+    public async static Task<IGroupMembersCollectionWithReferencesPage> ListMembersInGroupAsync()
     {
         EnsureGraphForAppOnlyAuth();
         // Ensure client isn't null
@@ -209,12 +209,15 @@ class GraphHelper
         var members = await _appClient.Groups["4b5c4fad-ba66-4628-9d0b-46ada2a47345"].Members
             .Request()
             .GetAsync();
+        Console.WriteLine(members.GetType());
 
         foreach(User member in members){
             //Console.WriteLine(JsonSerializer.Serialize(member));
             //Console.WriteLine(member.GetType());
             Console.WriteLine(member.DisplayName);
         }
+
+        return members;
     }
 
     //https://docs.microsoft.com/en-us/graph/api/calendar-getschedule?view=graph-rest-1.0&tabs=csharp
@@ -233,13 +236,13 @@ class GraphHelper
         var startTime = new DateTimeTimeZone
         {
             DateTime = "2019-03-15T09:00:00",
-            TimeZone = "Pacific Standard Time"
+            TimeZone = "Asia/Tokyo"
         };
 
         var endTime = new DateTimeTimeZone
         {
             DateTime = "2019-03-15T18:00:00",
-            TimeZone = "Pacific Standard Time"
+            TimeZone = "Asia/Tokyo"
         };
 
         var availabilityViewInterval = 60;
@@ -247,7 +250,7 @@ class GraphHelper
         var results = await _appClient.Users[userEmail].Calendar
             .GetSchedule(schedules,endTime,startTime,availabilityViewInterval)
             .Request()
-            .Header("Prefer","outlook.timezone=\"Pacific Standard Time\"")
+            .Header("Prefer","outlook.timezone=\"Tokyo Standard Time\"")
             .PostAsync();
 
         //Console.WriteLine(results.GetType());
@@ -260,24 +263,85 @@ class GraphHelper
     
 
     // https://docs.microsoft.com/en-us/graph/api/user-findmeetingtimes?view=graph-rest-1.0&tabs=http
-    public async static Task FindMeetingTimes(string userEmail)
+    public async static Task<TimeSlot> FindMeetingTimes(string userEmail)
     {
         // Ensure client isn't null
         _ = _userClient ??
             throw new System.NullReferenceException("Graph has not been initialized for user auth");
 
-        MeetingTimeSuggestionsResult meetingResponse = await _userClient.Me
-            .FindMeetingTimes()
-            .Request()
-            .Header("Prefer", "outlook.timezone=\"W. Europe Standard Time\"")
-            .PostAsync();
+        var attendees = new List<AttendeeBase>()
+        {
+            new AttendeeBase
+            {
+                Type = AttendeeType.Required,
+                EmailAddress = new EmailAddress
+                {
+                    Address = userEmail
+                }
+            }
+        };
 
+        var locationConstraint = new LocationConstraint
+        {
+            IsRequired = false,
+            SuggestLocation = false,
+            Locations = new List<LocationConstraintItem>()
+            {
+                new LocationConstraintItem
+                {
+                    ResolveAvailability = false,
+                    DisplayName = "Conf room Hood"
+                }
+            }
+        };
+
+        System.DateTime now = System.DateTime.Now;
+        var timeConstraint = new TimeConstraint
+        {
+            ActivityDomain = ActivityDomain.Work,
+            TimeSlots = new List<TimeSlot>()
+            {
+                new TimeSlot
+                {
+                    Start = new DateTimeTimeZone
+                    {
+                        DateTime = now.ToString(),
+                        TimeZone = "Tokyo Standard Time"
+                    },
+                    End = new DateTimeTimeZone
+                    {
+                        DateTime = now.AddDays(100).ToString(),
+                        TimeZone = "Tokyo Standard Time"
+                    }
+                }
+            }
+        };
+        Console.WriteLine(timeConstraint.TimeSlots.ElementAt(0).Start.DateTime);
+
+        var isOrganizerOptional = false;
+
+        var meetingDuration = new Duration("PT1H");
+
+        var returnSuggestionReasons = true;
+
+        var minimumAttendeePercentage = (double)100;
+
+        
+        MeetingTimeSuggestionsResult meetingResponse = await _userClient.Me
+            .FindMeetingTimes(attendees,locationConstraint,timeConstraint,meetingDuration,null,isOrganizerOptional,returnSuggestionReasons,minimumAttendeePercentage)
+	        .Request()
+            .Header("Prefer", "outlook.timezone=\"Tokyo Standard Time\"")
+            .PostAsync();
+        
         Console.WriteLine(JsonSerializer.Serialize(meetingResponse));
-        //Console.WriteLine(member.DisplayName);
+        Console.WriteLine("Suggested start: " + meetingResponse.MeetingTimeSuggestions.ElementAt(0).MeetingTimeSlot.Start.DateTime.ToString());
+        Console.WriteLine("Suggested end: " + meetingResponse.MeetingTimeSuggestions.ElementAt(0).MeetingTimeSlot.End.DateTime.ToString());
+        
+        return meetingResponse.MeetingTimeSuggestions.ElementAt(0).MeetingTimeSlot;
     }
 
     // https://docs.microsoft.com/en-us/graph/api/calendar-post-events?view=graph-rest-1.0&tabs=csharp#example-2-create-and-enable-an-event-as-an-online-meeting
-    public async static Task CreateEventAsync(string userEmail)
+    public async static Task CreateEventAsync(string userEmail, TimeSlot timeslot)
     {
         EnsureGraphForAppOnlyAuth();
         // Ensure client isn't null
@@ -286,22 +350,14 @@ class GraphHelper
 
         var @event = new Event
         {
-            Subject = "Let's go for lunch",
+            Subject = "let's go for lunch",
             Body = new ItemBody
             {
                 ContentType = BodyType.Html,
                 Content = "Does noon work for you?"
             },
-            Start = new DateTimeTimeZone
-            {
-                DateTime = "2022-07-15T12:00:00",
-                TimeZone = "Pacific Standard Time"
-            },
-            End = new DateTimeTimeZone
-            {
-                DateTime = "2022-07-15T14:00:00",
-                TimeZone = "Pacific Standard Time"
-            },
+            Start = timeslot.Start,
+            End = timeslot.End,
             Location = new Location
             {
                 DisplayName = "Harry's Bar"
@@ -325,7 +381,7 @@ class GraphHelper
 
         // Send the message
         await _appClient.Users[userEmail]
-            .Events.Request().Header("Prefer","outlook.timezone=\"Pacific Standard Time\"").AddAsync(@event);
+            .Events.Request().Header("Prefer","outlook.timezone=\"Tokyo Standard Time\"").AddAsync(@event);
     }
     
 }
